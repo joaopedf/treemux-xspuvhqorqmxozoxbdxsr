@@ -11,17 +11,17 @@ import { ReasoningTimeline } from "@/components/medbrief/reasoning-timeline";
 import { WorkupRecommendationsView } from "@/components/medbrief/workup-recommendations";
 import { RedFlags } from "@/components/medbrief/red-flags";
 import { ClinicalSummary } from "@/components/medbrief/clinical-summary";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { FollowUpChat } from "@/components/medbrief/follow-up-chat";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import {
   Brain,
-  ListChecks,
   FlaskConical,
-  ClipboardList,
   RotateCcw,
   Sparkles,
+  Stethoscope,
+  Activity,
+  ShieldCheck,
 } from "lucide-react";
 import type { AnalysisState, ClinicalAnalysis } from "@/lib/types";
 
@@ -63,7 +63,6 @@ export default function Home() {
       let accumulated = "";
       let lastProgressUpdate = Date.now();
 
-      // Progress simulation stages
       const stages: { threshold: number; status: AnalysisState["status"]; step: string }[] = [
         { threshold: 0.1, status: "extracting", step: "Parsing clinical presentation..." },
         { threshold: 0.2, status: "extracting", step: "Identifying vital signs and symptoms..." },
@@ -81,14 +80,12 @@ export default function Home() {
 
         accumulated += decoder.decode(value, { stream: true });
 
-        // Estimate progress based on accumulated content length (approximate)
-        const estimatedTotal = 3000; // rough character estimate for full response
+        const estimatedTotal = 3000;
         const progress = Math.min(
           95,
           Math.round((accumulated.length / estimatedTotal) * 100)
         );
 
-        // Update status based on progress
         const now = Date.now();
         if (now - lastProgressUpdate > 300) {
           const currentStage =
@@ -106,10 +103,8 @@ export default function Home() {
         }
       }
 
-      // Parse the complete JSON response
       let parsed: ClinicalAnalysis;
       try {
-        // Try to extract JSON from the accumulated text
         const jsonMatch = accumulated.match(/\{[\s\S]*\}/);
         if (!jsonMatch) throw new Error("No JSON found in response");
         parsed = JSON.parse(jsonMatch[0]);
@@ -160,7 +155,7 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="mx-auto max-w-[1600px] p-6">
+      <main className="mx-auto max-w-[1600px] p-4 sm:p-6">
         {!result ? (
           /* Input Mode */
           <div className="mx-auto max-w-3xl">
@@ -176,15 +171,39 @@ export default function Home() {
                   AI-Powered Clinical Analysis
                 </span>
               </div>
-              <h2 className="mb-2 text-2xl font-bold tracking-tight sm:text-3xl">
+              <h2 className="mb-3 text-3xl font-bold tracking-tight sm:text-4xl">
                 Clinical Reasoning{" "}
                 <span className="text-primary">Copilot</span>
               </h2>
-              <p className="mx-auto max-w-lg text-sm text-muted-foreground">
+              <p className="mx-auto max-w-lg text-sm leading-relaxed text-muted-foreground">
                 Enter a patient presentation and receive structured differential
                 diagnoses, evidence-based workup recommendations, and transparent
                 clinical reasoning — all in real-time.
               </p>
+
+              {/* Feature pills */}
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                {[
+                  { icon: Stethoscope, label: "Differential Dx" },
+                  { icon: Brain, label: "Clinical Reasoning" },
+                  { icon: FlaskConical, label: "Workup Plans" },
+                  { icon: Activity, label: "Red Flag Detection" },
+                  { icon: ShieldCheck, label: "Evidence-Based" },
+                ].map((feat, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 + i * 0.06 }}
+                    className="flex items-center gap-1.5 rounded-full border border-border/50 bg-card/30 px-3 py-1"
+                  >
+                    <feat.icon className="h-3 w-3 text-primary/60" />
+                    <span className="text-[11px] text-muted-foreground">
+                      {feat.label}
+                    </span>
+                  </motion.div>
+                ))}
+              </div>
             </motion.div>
 
             <CaseInput onSubmit={handleAnalyze} isAnalyzing={isAnalyzing} />
@@ -210,9 +229,8 @@ export default function Home() {
               className="mt-8 text-center text-[10px] leading-relaxed text-muted-foreground/50"
             >
               MedBrief AI is a clinical decision support tool for educational
-              purposes. It does not replace clinical judgment. Always verify
-              recommendations against current evidence-based guidelines and
-              institutional protocols.
+              purposes only. It does not replace clinical judgment. Always verify
+              recommendations against current evidence-based guidelines.
             </motion.p>
           </div>
         ) : (
@@ -223,9 +241,9 @@ export default function Home() {
             transition={{ duration: 0.5 }}
           >
             {/* Results Header */}
-            <div className="mb-6 flex items-center justify-between">
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--med-green)]/10">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--med-green)]/10 glow-teal">
                   <Brain className="h-5 w-5 text-[var(--med-green)]" />
                 </div>
                 <div>
@@ -233,11 +251,11 @@ export default function Home() {
                     Analysis Complete
                   </h2>
                   <p className="text-xs text-muted-foreground">
-                    {result.differentialDiagnoses.length} diagnoses considered
-                    {" / "}
+                    {result.differentialDiagnoses.length} diagnoses
+                    <span className="mx-1.5 text-border">|</span>
                     {result.reasoningSteps.length} reasoning steps
-                    {" / "}
-                    {result.redFlags.length} red flags
+                    <span className="mx-1.5 text-border">|</span>
+                    {result.redFlags.length} red flags identified
                   </p>
                 </div>
               </div>
@@ -245,14 +263,14 @@ export default function Home() {
                 variant="outline"
                 size="sm"
                 onClick={handleReset}
-                className="gap-1.5"
+                className="gap-1.5 self-start sm:self-auto"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
                 New Case
               </Button>
             </div>
 
-            {/* Red Flags - Always visible at top */}
+            {/* Red Flags */}
             {result.redFlags.length > 0 && (
               <div className="mb-6">
                 <RedFlags flags={result.redFlags} />
@@ -266,58 +284,29 @@ export default function Home() {
 
             <Separator className="mb-6" />
 
-            {/* Tabbed Results */}
-            <Tabs defaultValue="differential" className="w-full">
-              <TabsList className="mb-6 w-full justify-start gap-1 bg-transparent p-0">
-                <TabsTrigger
-                  value="differential"
-                  className="gap-1.5 rounded-lg border border-transparent data-[state=active]:border-primary/30 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
-                >
-                  <ListChecks className="h-3.5 w-3.5" />
-                  Differential
-                </TabsTrigger>
-                <TabsTrigger
-                  value="reasoning"
-                  className="gap-1.5 rounded-lg border border-transparent data-[state=active]:border-primary/30 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
-                >
-                  <Brain className="h-3.5 w-3.5" />
-                  Reasoning
-                </TabsTrigger>
-                <TabsTrigger
-                  value="workup"
-                  className="gap-1.5 rounded-lg border border-transparent data-[state=active]:border-primary/30 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
-                >
-                  <FlaskConical className="h-3.5 w-3.5" />
-                  Workup
-                </TabsTrigger>
-                <TabsTrigger
-                  value="data"
-                  className="gap-1.5 rounded-lg border border-transparent data-[state=active]:border-primary/30 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
-                >
-                  <ClipboardList className="h-3.5 w-3.5" />
-                  Data
-                </TabsTrigger>
-              </TabsList>
+            {/* Two-column layout on desktop */}
+            <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
+              {/* Left: Differential + Workup */}
+              <div className="flex flex-col gap-6">
+                <DifferentialDiagnosisView
+                  diagnoses={result.differentialDiagnoses}
+                />
+                <Separator />
+                <WorkupRecommendationsView
+                  recommendations={result.workupRecommendations}
+                />
+              </div>
 
-              <ScrollArea className="h-[calc(100vh-350px)]">
-                <TabsContent value="differential" className="mt-0">
-                  <DifferentialDiagnosisView
-                    diagnoses={result.differentialDiagnoses}
-                  />
-                </TabsContent>
-                <TabsContent value="reasoning" className="mt-0">
-                  <ReasoningTimeline steps={result.reasoningSteps} />
-                </TabsContent>
-                <TabsContent value="workup" className="mt-0">
-                  <WorkupRecommendationsView
-                    recommendations={result.workupRecommendations}
-                  />
-                </TabsContent>
-                <TabsContent value="data" className="mt-0">
-                  <ExtractedDataView data={result.extractedData} />
-                </TabsContent>
-              </ScrollArea>
-            </Tabs>
+              {/* Right: Reasoning + Data */}
+              <div className="flex flex-col gap-6">
+                <ReasoningTimeline steps={result.reasoningSteps} />
+                <Separator />
+                <ExtractedDataView data={result.extractedData} />
+              </div>
+            </div>
+
+            {/* Follow-up Chat */}
+            <FollowUpChat analysis={result} />
           </motion.div>
         )}
       </main>
