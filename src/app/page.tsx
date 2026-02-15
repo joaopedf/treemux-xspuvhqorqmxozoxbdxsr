@@ -12,6 +12,8 @@ import { WorkupRecommendationsView } from "@/components/medbrief/workup-recommen
 import { RedFlags } from "@/components/medbrief/red-flags";
 import { ClinicalSummary } from "@/components/medbrief/clinical-summary";
 import { FollowUpChat } from "@/components/medbrief/follow-up-chat";
+import { ExportButton } from "@/components/medbrief/export-button";
+import { StatCards } from "@/components/medbrief/stat-cards";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import {
@@ -259,15 +261,23 @@ export default function Home() {
                   </p>
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleReset}
-                className="gap-1.5 self-start sm:self-auto"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-                New Case
-              </Button>
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <ExportButton analysis={result} />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleReset}
+                  className="gap-1.5"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  New Case
+                </Button>
+              </div>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="mb-6">
+              <StatCards analysis={result} />
             </div>
 
             {/* Red Flags */}
